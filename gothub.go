@@ -7,20 +7,24 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 // The HTTP host that we will hit to use the GitHub API.
 const (
 	GitHubUrl           string = "https://api.github.com"
-	ErrRateLimitReached        = errors.New("Rate limit reached")
 )
+
+var (
+	ErrRateLimitReached        = errors.New("Rate limit reached")
+)	
 
 // The GitHub struct represents an active session to the GitHub API.
 type GitHub struct {
 	httpClient         *http.Client
 	Authorization      string
-	rateLimit          int
-	rateLimitRemaining int
+	RateLimit          int
+	RateLimitRemaining int
 }
 
 func hashAuth(u, p string) string {
@@ -51,9 +55,18 @@ func BasicLogin(username, password string) (*GitHub, error) {
 
 	if response.StatusCode == http.StatusOK {
 		// Yaaaaaaay!
-		ratelimit := response.Header.Get("X-RateLimit-Limit")
-		remaining := response.Header.Get("X-RateLimit-Remaining")
-		return &GitHub{httpClient: client, Authorization: authorization, rateLimit: int(ratelimit), rateLimitRemaining: int(remaining)}, nil
+		ratelimit, err := strconv.Atoi(response.Header.Get("X-RateLimit-Limit"))
+		if err != nil {
+			return nil, err
+		}
+		
+		remaining, err := strconv.Atoi(response.Header.Get("X-RateLimit-Remaining"))
+		if err != nil {
+			return nil, err
+		}
+
+		return &GitHub{httpClient: client, Authorization: authorization,
+			RateLimit: ratelimit, RateLimitRemaining: remaining}, nil
 	}
 
 	// Should we get here, the basic authentication request failed.
@@ -61,16 +74,15 @@ func BasicLogin(username, password string) (*GitHub, error) {
 	return nil, errors.New(fmt.Sprintf(e, response.StatusCode))
 }
 
-func (g *GitHub) callGithubApi(method, uri string, rs interface{}) (err error) {
-	if g.rateLimitRemaining == 0 {
-		err = ErrRateLimitReached
-		return
+func (g *GitHub) callGithubApi(method, uri string, rs interface{}) error {
+	if g.RateLimitRemaining == 0 {
+		return ErrRateLimitReached
 	}
 
 	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
 	request, err := http.NewRequest(method, url, nil)
 	if err != nil {
-		return
+		return err
 	}
 
 	request.Header.Set("Authorization", g.Authorization)
@@ -78,22 +90,28 @@ func (g *GitHub) callGithubApi(method, uri string, rs interface{}) (err error) {
 	// Fire off the request.
 	response, err := g.httpClient.Do(request)
 	if err != nil {
-		return
+		return err
 	}
 
 	// Update the rate limits
-	limit := response.Header.Get("X-RateLimit-Limit")
-	g.rateLimit = int(limit)
+	limit, err := strconv.Atoi(response.Header.Get("X-RateLimit-Limit"))
+	if err != nil {
+		return err
+	}
+	g.RateLimit = limit
 
-	remaining := response.Header.Get("X-RateLimit-Remaining")
-	g.rateLimitRemaining = int(remaining)
+	remaining, err := strconv.Atoi(response.Header.Get("X-RateLimit-Remaining"))
+	if err != nil {
+		return err
+	}
+	g.RateLimitRemaining = remaining
 
 	// Now, marshal the HTTP response (if it was successful) onto the
 	// struct provided by `rs`
 	if response.StatusCode != http.StatusOK {
 		e := "GitHub API responded with HTTP %d"
-		err = errors.New(fmt.Sprintf(e, response.StatusCode))
-		return
+		err := errors.New(fmt.Sprintf(e, response.StatusCode))
+		return err
 	}
 
 	// Check to make sure we actually got JSON back.
@@ -102,13 +120,13 @@ func (g *GitHub) callGithubApi(method, uri string, rs interface{}) (err error) {
 		fallthrough
 	case "application/json; charset=utf-8":
 		var js []byte
-		js, err = ioutil.ReadAll(response.Body)
+		js, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			return
+			return err
 		} else {
-			err = json.Unmarshal(js, &rs)
+			err = json.Unmarshal(js, rs)
 		}
 	}
 
-	return
+	return err
 }

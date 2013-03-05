@@ -61,7 +61,7 @@ type CurrentUser struct {
 // Returns the currently-authenticated user, as a pointer to a CurrentUser struct.
 func (g *GitHub) GetCurrentUser() (*CurrentUser, error) {
 	var user CurrentUser
-	if err := g.callGithubApi("GET", "/user", user); err != nil {
+	if err := g.callGithubApi("GET", "/user", &user); err != nil {
 		return nil, err
 	}
 	return &user, nil

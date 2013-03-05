@@ -22,7 +22,7 @@ A simple `go get github.com/nesv/gothub` should be sufficient.
 
 ## I can haz docs plz?
 
-Those are on their way.
+Documentation is automatically generated, and can be found here: [http://godoc.org/github.com/nesv/gothub](http://godoc.org/github.com/nesv/gothub)
 
 kthxbai.
 

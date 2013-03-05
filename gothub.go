@@ -1,25 +1,25 @@
 package gothub
 
 import (
-	"fmt"
 	"encoding/base64"
 	"encoding/json"
-	"net/http"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 )
 
 // The HTTP host that we will hit to use the GitHub API.
 const (
-	GitHubUrl string = "https://api.github.com"
-	ErrRateLimitReached = errors.New("Rate limit reached")
+	GitHubUrl           string = "https://api.github.com"
+	ErrRateLimitReached        = errors.New("Rate limit reached")
 )
 
 // The GitHub struct represents an active session to the GitHub API.
 type GitHub struct {
-	httpClient *http.Client
-	Authorization string
-	rateLimit int
+	httpClient         *http.Client
+	Authorization      string
+	rateLimit          int
 	rateLimitRemaining int
 }
 
@@ -87,7 +87,6 @@ func (g *GitHub) callGithubApi(method, uri string, rs interface{}) (err error) {
 
 	remaining := response.Header.Get("X-RateLimit-Remaining")
 	g.rateLimitRemaining = int(remaining)
-	
 
 	// Now, marshal the HTTP response (if it was successful) onto the
 	// struct provided by `rs`

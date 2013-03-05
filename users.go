@@ -11,25 +11,25 @@ import (
 // Please take note that you cannot use the User struct to modify the details of a user's account.
 // To do this, please look at the CurrentUser struct.
 type User struct {
-	Login string `json:"login"`
-	Id int `json:"id"`
-	AvatarUrl url.URL
-	GravatarId string `json:"gravatar_id"`
-	Url url.URL
-	Name string `json:"name"`
-	Company string `json:"company"`
-	Blog url.URL
-	Location string `json:"location"`
-	Email string `json:"email"`
-	Hireable bool `json:"hireable"`
-	Bio string `json:"bio"`
-	PublicRepos int `json:"public_repos"`
-	PublicGists int `json:"public_gists"`
-	Followers int `json:"followers"`
-	Following int `json:"following"`
-	HtmlUrl url.URL
-	CreatedAt time.Time
-	Type string `json:"type"`
+	Login       string `json:"login"`
+	Id          int    `json:"id"`
+	AvatarUrl   url.URL
+	GravatarId  string `json:"gravatar_id"`
+	Url         url.URL
+	Name        string `json:"name"`
+	Company     string `json:"company"`
+	Blog        url.URL
+	Location    string `json:"location"`
+	Email       string `json:"email"`
+	Hireable    bool   `json:"hireable"`
+	Bio         string `json:"bio"`
+	PublicRepos int    `json:"public_repos"`
+	PublicGists int    `json:"public_gists"`
+	Followers   int    `json:"followers"`
+	Following   int    `json:"following"`
+	HtmlUrl     url.URL
+	CreatedAt   time.Time
+	Type        string `json:"type"`
 }
 
 // Returns the details of a single user, as specified by their "login".

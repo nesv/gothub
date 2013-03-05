@@ -3,7 +3,6 @@ package gothub
 import (
 	"net/url"
 	"time"
-	"errors"
 )
 
 // Represents information about a user's account as defined here:
@@ -12,25 +11,25 @@ import (
 // Please take note that you cannot use the User struct to modify the details of a user's account.
 // To do this, please look at the CurrentUser struct.
 type User struct {
-	Login string
-	Id int
+	Login string `json:"login"`
+	Id int `json:"id"`
 	AvatarUrl url.URL
-	GravatarId string
+	GravatarId string `json:"gravatar_id"`
 	Url url.URL
-	Name string
-	Company string
+	Name string `json:"name"`
+	Company string `json:"company"`
 	Blog url.URL
-	Location string
-	Email string
-	Hireable bool
-	Bio string
-	PublicRepos int
-	PublicGists int
-	Followers int
-	Following int
+	Location string `json:"location"`
+	Email string `json:"email"`
+	Hireable bool `json:"hireable"`
+	Bio string `json:"bio"`
+	PublicRepos int `json:"public_repos"`
+	PublicGists int `json:"public_gists"`
+	Followers int `json:"followers"`
+	Following int `json:"following"`
 	HtmlUrl url.URL
 	CreatedAt time.Time
-	Type string
+	Type string `json:"type"`
 }
 
 // Returns the details of a single user, as specified by their "login".
@@ -47,7 +46,7 @@ func GetUser(login string) (*User, error) {
 //
 // Please use sparingly.
 func GetAllUsers() ([]*User, error) {
-	var users 
+	return nil, nil
 }
 
 // A special struct to represent the current user.
@@ -60,7 +59,10 @@ type CurrentUser struct {
 }
 
 // Returns the currently-authenticated user, as a pointer to a CurrentUser struct.
-func GetCurrentUser() (*CurrentUser, error) {
-	var user User
+func (g *GitHub) GetCurrentUser() (*CurrentUser, error) {
+	var user CurrentUser
+	if err := g.callGithubApi("GET", "/user", user); err != nil {
+		return nil, err
+	}
 	return &user, nil
 }

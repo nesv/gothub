@@ -18,8 +18,7 @@ func TestGetCurrentUser(t *testing.T) {
 
 	t.Logf("Authorization: %s", g.Authorization)
 	
-	var user *CurrentUser
-	user, err = g.GetCurrentUser()
+	user, err := g.GetCurrentUser()
 	if err != nil {
 		t.Error(err)
 	} else {

@@ -49,18 +49,9 @@ func GetAllUsers() ([]*User, error) {
 	return nil, nil
 }
 
-// A special struct to represent the current user.
-//
-// The only difference between the CurrentUser and User structs, is that the CurrentUser struct
-// has methods pinned to it, and supports modification.
-type CurrentUser struct {
-	User
-	modified bool
-}
-
 // Returns the currently-authenticated user, as a pointer to a CurrentUser struct.
-func (g *GitHub) GetCurrentUser() (*CurrentUser, error) {
-	var user CurrentUser
+func (g *GitHub) GetCurrentUser() (*User, error) {
+	var user User
 	if err := g.callGithubApi("GET", "/user", &user); err != nil {
 		return nil, err
 	}

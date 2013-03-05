@@ -17,6 +17,7 @@ const (
 
 var (
 	ErrRateLimitReached        = errors.New("Rate limit reached")
+	ErrNoJSON = errors.New("GitHub did not return a JSON response")
 )	
 
 // The GitHub struct represents an active session to the GitHub API.
@@ -126,6 +127,8 @@ func (g *GitHub) callGithubApi(method, uri string, rs interface{}) error {
 		} else {
 			err = json.Unmarshal(js, rs)
 		}
+	default:
+		err = ErrNoJSON
 	}
 
 	return err

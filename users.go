@@ -1,6 +1,7 @@
 package gothub
 
 import (
+	"fmt"
 	"net/url"
 	"time"
 )
@@ -37,19 +38,20 @@ type User struct {
 // The term "login" is synonymous with "username":
 //
 //    https://github.com/<login>
-func GetUser(login string) (*User, error) {
+func (g *GitHub) GetUser(login string) (*User, error) {
 	var user User
+	if err := g.callGithubApi("GET", fmt.Sprintf("/users/%s", login), &user); err != nil {
+		return nil, err
+	}
 	return &user, nil
 }
 
 // Get a list of every single user on GitHub.
-//
-// Please use sparingly.
 func GetAllUsers() ([]*User, error) {
 	return nil, nil
 }
 
-// Returns the currently-authenticated user, as a pointer to a CurrentUser struct.
+// Returns the currently-authenticated user, as a pointer to a User struct.
 func (g *GitHub) GetCurrentUser() (*User, error) {
 	var user User
 	if err := g.callGithubApi("GET", "/user", &user); err != nil {

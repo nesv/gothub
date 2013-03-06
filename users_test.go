@@ -26,3 +26,21 @@ func TestGetCurrentUser(t *testing.T) {
 		t.Logf("Login: %s", user.Login)
 	}
 }
+
+func TestGetUser(t *testing.T) {
+	u, p, err := getTestingCredentials()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var g *GitHub
+	g, err = BasicLogin(u, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if user, err := g.GetUser(u); err != nil {
+		t.Error(err)
+	} else {
+		t.Logf("ID: %d", user.Id)
+		t.Logf("Login: %s", user.Login)
+	}
+}

@@ -4,6 +4,33 @@ import (
 	"testing"
 )
 
+func TestUserEmails(t *testing.T) {
+	u, p, err := getTestingCredentials()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	g, err := BasicLogin(u, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	user, err := g.GetCurrentUser()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	emails, err := user.Emails()
+	if err != nil {
+		t.Error(err)
+	}
+
+	t.Logf("# emails: %d", len(emails))
+	for i, email := range emails {
+		t.Logf("Email #%d: %s", i, email)
+	}
+}
+
 func TestGetUser(t *testing.T) {
 	u, p, err := getTestingCredentials()
 	if err != nil {

@@ -2,6 +2,8 @@ package gothub
 
 import (
 	"fmt"
+	"io/ioutil"
+	"strings"
 	"time"
 )
 
@@ -30,10 +32,25 @@ type User struct {
 	HtmlUrl     string    `json:"html_url"`
 	CreatedAt   time.Time `json:"created_at"`
 	Type        string    `json:"type"`
+	g           *GitHub
 }
 
-func (u *User) Emails() ([]string, error) {
-	return nil, nil
+func (u *User) Emails() (emails []string, err error) {
+	response, err := call(u.g, "GET", "/user/emails")
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+
+	rs := strings.Trim(string(body), "[]")
+	for _, email := range strings.Split(rs, ",") {
+		emails = append(emails, strings.Trim(email, "\""))
+	}
+	return
 }
 
 // Returns the details of a single user, as specified by their "login".
@@ -47,7 +64,7 @@ func (g *GitHub) GetUser(login string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	user.g = g
 	return &user, nil
 }
 
@@ -58,6 +75,6 @@ func (g *GitHub) GetCurrentUser() (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	user.g = g
 	return &user, nil
 }

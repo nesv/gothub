@@ -35,8 +35,8 @@ type User struct {
 	g           *GitHub
 }
 
-func (u *User) Emails() (emails []string, err error) {
-	response, err := call(u.g, "GET", "/user/emails")
+func (g *GitHub) Emails() (emails []string, err error) {
+	response, err := call(g, "GET", "/user/emails")
 	if err != nil {
 		return
 	}

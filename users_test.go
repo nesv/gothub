@@ -15,12 +15,7 @@ func TestUserEmails(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	user, err := g.GetCurrentUser()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	emails, err := user.Emails()
+	emails, err := g.Emails()
 	if err != nil {
 		t.Error(err)
 	}

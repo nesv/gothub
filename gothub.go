@@ -92,7 +92,7 @@ func (g *GitHub) updateRates(r *http.Response) (err error) {
 }
 
 // Calls the GitHub API and returns the raw, HTTP response body.
-func (g *GitHub) call(method, uri string) (response *http.Response, err error) {
+func call(g *GitHub, method, uri string) (response *http.Response, err error) {
 	if g.RateLimitRemaining == 0 {
 		err = ErrRateLimitReached
 		return
@@ -127,7 +127,7 @@ func (g *GitHub) call(method, uri string) (response *http.Response, err error) {
 // Calls the GitHub API, but will unmarshal a JSON response to the struct
 // provided to `rs`.
 func (g *GitHub) callGithubApi(method, uri string, rs interface{}) error {
-	response, err := g.call(method, uri)
+	response, err := call(g, method, uri)
 	if err != nil {
 		return err
 	}

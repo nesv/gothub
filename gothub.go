@@ -115,10 +115,26 @@ func call(g *GitHub, method, uri string) (response *http.Response, err error) {
 	// Update the call rates
 	g.updateRates(response)
 
-	// Check to make sure the API came back with an HTTP 200 OK
-	if response.StatusCode != http.StatusOK {
-		e := "GitHub API responded with HTTP %d"
-		err = errors.New(fmt.Sprintf(e, response.StatusCode))
+	// Check to make sure the API came back with an appropriate HTTP status
+	// code, depending on the request method
+	switch method {
+	case "GET":
+		if response.StatusCode != http.StatusOK {
+			e := "GitHub API responded with HTTP %d"
+			err = errors.New(fmt.Sprintf(e, response.StatusCode))
+		}
+
+	case "POST":
+		switch response.StatusCode {
+		case http.StatusCreated:
+			return
+		}
+
+	case "DELETE":
+		switch response.StatusCode {
+		case http.StatusNoContent:
+			return
+		}
 	}
 
 	return

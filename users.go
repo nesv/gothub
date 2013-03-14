@@ -35,24 +35,6 @@ type User struct {
 	g           *GitHub
 }
 
-func (g *GitHub) Emails() (emails []string, err error) {
-	response, err := call(g, "GET", "/user/emails")
-	if err != nil {
-		return
-	}
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-
-	rs := strings.Trim(string(body), "[]")
-	for _, email := range strings.Split(rs, ",") {
-		emails = append(emails, strings.Trim(email, "\""))
-	}
-	return
-}
-
 // Returns the details of a single user, as specified by their "login".
 //
 // The term "login" is synonymous with "username":
@@ -77,4 +59,35 @@ func (g *GitHub) GetCurrentUser() (*User, error) {
 	}
 	user.g = g
 	return &user, nil
+}
+
+// Returns a list of the email accounts associated with the currently-
+// authenticated user.
+func (g *GitHub) Emails() (emails []string, err error) {
+	response, err := call(g, "GET", "/user/emails")
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+
+	rs := strings.Trim(string(body), "[]")
+	for _, email := range strings.Split(rs, ",") {
+		emails = append(emails, strings.Trim(email, "\""))
+	}
+	return
+}
+
+// Associate a list of emails with the currently-authenticated user's account.
+func (g *GitHub) AddEmails(emails []string) (err error) {
+	return
+}
+
+// Disassociate a list of emails from the currently-authenticated user's
+// account.
+func (g *GitHub) DeleteEmails(emails []string) (err error) {
+	return
 }

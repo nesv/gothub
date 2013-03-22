@@ -10,6 +10,8 @@ language.
 You can pronounce it like "got hub", "goth hub" for those darker times, or
 really, however the heck you feel like pronouncing it.
 
+"go thub" is also acceptable.
+
 ## Why are you working on this?
 
 Well, simply because I wanted a client-side library with which to utilize

@@ -83,6 +83,7 @@ func (g *GitHub) Emails() (emails []string, err error) {
 
 // Associate a list of emails with the currently-authenticated user's account.
 func (g *GitHub) AddEmails(emails []string) (err error) {
+	g.post()
 	return
 }
 

@@ -166,3 +166,38 @@ func (g *GitHub) callGithubApi(method, uri string, rs interface{}) error {
 
 	return err
 }
+
+func (g *GitHub) call(req *http.Request) (response *http.Response, err error) {
+	if g.RateLimitRemaining == 0 {
+		err = ErrRateLimitReached
+		return
+	}
+
+	request.Header.Set("Authorization", g.Authorization)
+
+	response, err = g.httpClient.Do(request)
+	g.updateRates(response)
+	return
+}
+
+func (g *GitHub) post(uri string, extraHeaders map[string]string, content []byte) (resp *http.Response, err error) {
+	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
+	request, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return
+	}
+
+	// Add (any of) the extra headers to the request
+	if extraHeaders != nil {
+		for h, v := range extraHeaders {
+			request.Header.Set(h, v)
+		}
+	}
+
+	// Set the Content-Type header, and add in the content body
+	request.Header.Set("Content-Type", "application/json; charset=utf-8")
+	
+
+	response, err := g.call(request)
+	return
+}

@@ -1,7 +1,9 @@
 package gothub
 
 import (
-	"net/url"
+	"fmt"
+	"io/ioutil"
+	"strings"
 	"time"
 )
 
@@ -11,25 +13,26 @@ import (
 // Please take note that you cannot use the User struct to modify the details of a user's account.
 // To do this, please look at the CurrentUser struct.
 type User struct {
-	Login       string `json:"login"`
-	Id          int    `json:"id"`
-	AvatarUrl   url.URL
-	GravatarId  string `json:"gravatar_id"`
-	Url         url.URL
-	Name        string `json:"name"`
-	Company     string `json:"company"`
-	Blog        url.URL
-	Location    string `json:"location"`
-	Email       string `json:"email"`
-	Hireable    bool   `json:"hireable"`
-	Bio         string `json:"bio"`
-	PublicRepos int    `json:"public_repos"`
-	PublicGists int    `json:"public_gists"`
-	Followers   int    `json:"followers"`
-	Following   int    `json:"following"`
-	HtmlUrl     url.URL
-	CreatedAt   time.Time
-	Type        string `json:"type"`
+	Login       string    `json:"login"`
+	Id          int       `json:"id"`
+	AvatarUrl   string    `json:"avatar_url"`
+	GravatarId  string    `json:"gravatar_id"`
+	Url         string    `json:"url"`
+	Name        string    `json:"name"`
+	Company     string    `json:"company"`
+	Blog        string    `json:"blog"`
+	Location    string    `json:"location"`
+	Email       string    `json:"email"`
+	Hireable    bool      `json:"hireable"`
+	Bio         string    `json:"bio"`
+	PublicRepos int       `json:"public_repos"`
+	PublicGists int       `json:"public_gists"`
+	Followers   int       `json:"followers"`
+	Following   int       `json:"following"`
+	HtmlUrl     string    `json:"html_url"`
+	CreatedAt   time.Time `json:"created_at"`
+	Type        string    `json:"type"`
+	g           *GitHub
 }
 
 // Returns the details of a single user, as specified by their "login".
@@ -37,23 +40,54 @@ type User struct {
 // The term "login" is synonymous with "username":
 //
 //    https://github.com/<login>
-func GetUser(login string) (*User, error) {
+func (g *GitHub) GetUser(login string) (*User, error) {
 	var user User
-	return &user, nil
-}
-
-// Get a list of every single user on GitHub.
-//
-// Please use sparingly.
-func GetAllUsers() ([]*User, error) {
-	return nil, nil
-}
-
-// Returns the currently-authenticated user, as a pointer to a CurrentUser struct.
-func (g *GitHub) GetCurrentUser() (*User, error) {
-	var user User
-	if err := g.callGithubApi("GET", "/user", &user); err != nil {
+	err := g.callGithubApi("GET", fmt.Sprintf("/users/%s", login), &user)
+	if err != nil {
 		return nil, err
 	}
+	user.g = g
 	return &user, nil
+}
+
+// Returns the currently-authenticated user, as a pointer to a User struct.
+func (g *GitHub) GetCurrentUser() (*User, error) {
+	var user User
+	err := g.callGithubApi("GET", "/user", &user)
+	if err != nil {
+		return nil, err
+	}
+	user.g = g
+	return &user, nil
+}
+
+// Returns a list of the email accounts associated with the currently-
+// authenticated user.
+func (g *GitHub) Emails() (emails []string, err error) {
+	response, err := call(g, "GET", "/user/emails")
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+
+	rs := strings.Trim(string(body), "[]")
+	for _, email := range strings.Split(rs, ",") {
+		emails = append(emails, strings.Trim(email, "\""))
+	}
+	return
+}
+
+// Associate a list of emails with the currently-authenticated user's account.
+func (g *GitHub) AddEmails(emails []string) (err error) {
+	return
+}
+
+// Disassociate a list of emails from the currently-authenticated user's
+// account.
+func (g *GitHub) DeleteEmails(emails []string) (err error) {
+	return
 }

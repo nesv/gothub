@@ -1,6 +1,7 @@
 package gothub
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -83,7 +84,17 @@ func (g *GitHub) Emails() (emails []string, err error) {
 
 // Associate a list of emails with the currently-authenticated user's account.
 func (g *GitHub) AddEmails(emails []string) (err error) {
-	g.post()
+	addresses := fmt.Sprintf("%v", emails)
+	buf := bytes.NewBufferString(addresses)
+	response, err := g.post("/user/emails", nil, buf)
+	if err != nil {
+		return
+	}
+	if response.StatusCode != http.StatusCreated {
+		e := "GitHub returned a %d status code; was expecting %d"
+		err = errors.New(fmt.Sprintf(e, response.StatusCode, http.StatusCreated))
+		return
+	}
 	return
 }
 

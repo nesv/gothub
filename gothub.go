@@ -12,13 +12,13 @@ import (
 
 // The HTTP host that we will hit to use the GitHub API.
 const (
-	GitHubUrl           string = "https://api.github.com"
+	GitHubUrl string = "https://api.github.com"
 )
 
 var (
-	ErrRateLimitReached        = errors.New("Rate limit reached")
-	ErrNoJSON = errors.New("GitHub did not return a JSON response")
-)	
+	ErrRateLimitReached = errors.New("Rate limit reached")
+	ErrNoJSON           = errors.New("GitHub did not return a JSON response")
+)
 
 // The GitHub struct represents an active session to the GitHub API.
 type GitHub struct {
@@ -60,7 +60,7 @@ func BasicLogin(username, password string) (*GitHub, error) {
 		if err != nil {
 			return nil, err
 		}
-		
+
 		remaining, err := strconv.Atoi(response.Header.Get("X-RateLimit-Remaining"))
 		if err != nil {
 			return nil, err
@@ -75,43 +75,76 @@ func BasicLogin(username, password string) (*GitHub, error) {
 	return nil, errors.New(fmt.Sprintf(e, response.StatusCode))
 }
 
-func (g *GitHub) callGithubApi(method, uri string, rs interface{}) error {
+// Updates the call limit rates in the GitHub struct.
+func (g *GitHub) updateRates(r *http.Response) (err error) {
+	limit, err := strconv.Atoi(r.Header.Get("X-RateLimit-Limit"))
+	if err != nil {
+		return
+	}
+	g.RateLimit = limit
+
+	remaining, err := strconv.Atoi(r.Header.Get("X-RateLimit-Remaining"))
+	if err != nil {
+		return
+	}
+	g.RateLimitRemaining = remaining
+	return
+}
+
+// Calls the GitHub API and returns the raw, HTTP response body.
+func call(g *GitHub, method, uri string) (response *http.Response, err error) {
 	if g.RateLimitRemaining == 0 {
-		return ErrRateLimitReached
+		err = ErrRateLimitReached
+		return
 	}
 
 	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
 	request, err := http.NewRequest(method, url, nil)
 	if err != nil {
-		return err
+		return
 	}
 
 	request.Header.Set("Authorization", g.Authorization)
 
 	// Fire off the request.
-	response, err := g.httpClient.Do(request)
+	response, err = g.httpClient.Do(request)
 	if err != nil {
-		return err
+		return
 	}
 
-	// Update the rate limits
-	limit, err := strconv.Atoi(response.Header.Get("X-RateLimit-Limit"))
-	if err != nil {
-		return err
-	}
-	g.RateLimit = limit
+	// Update the call rates
+	g.updateRates(response)
 
-	remaining, err := strconv.Atoi(response.Header.Get("X-RateLimit-Remaining"))
-	if err != nil {
-		return err
-	}
-	g.RateLimitRemaining = remaining
+	// Check to make sure the API came back with an appropriate HTTP status
+	// code, depending on the request method
+	switch method {
+	case "GET":
+		if response.StatusCode != http.StatusOK {
+			e := "GitHub API responded with HTTP %d"
+			err = errors.New(fmt.Sprintf(e, response.StatusCode))
+		}
 
-	// Now, marshal the HTTP response (if it was successful) onto the
-	// struct provided by `rs`
-	if response.StatusCode != http.StatusOK {
-		e := "GitHub API responded with HTTP %d"
-		err := errors.New(fmt.Sprintf(e, response.StatusCode))
+	case "POST":
+		switch response.StatusCode {
+		case http.StatusCreated:
+			return
+		}
+
+	case "DELETE":
+		switch response.StatusCode {
+		case http.StatusNoContent:
+			return
+		}
+	}
+
+	return
+}
+
+// Calls the GitHub API, but will unmarshal a JSON response to the struct
+// provided to `rs`.
+func (g *GitHub) callGithubApi(method, uri string, rs interface{}) error {
+	response, err := call(g, method, uri)
+	if err != nil {
 		return err
 	}
 

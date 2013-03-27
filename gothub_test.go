@@ -1,9 +1,9 @@
 package gothub
 
 import (
-	"testing"
-	"os"
 	"errors"
+	"os"
+	"testing"
 )
 
 func getTestingCredentials() (username, password string, err error) {

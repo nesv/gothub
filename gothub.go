@@ -1,6 +1,7 @@
 package gothub
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -167,6 +168,8 @@ func (g *GitHub) callGithubApi(method, uri string, rs interface{}) error {
 	return err
 }
 
+// Stuffs the approriate Authorization header into place on the request, then
+// calls the GitHub API and udpates the API limit rates.
 func (g *GitHub) call(req *http.Request) (response *http.Response, err error) {
 	if g.RateLimitRemaining == 0 {
 		err = ErrRateLimitReached
@@ -180,9 +183,28 @@ func (g *GitHub) call(req *http.Request) (response *http.Response, err error) {
 	return
 }
 
-func (g *GitHub) post(uri string, extraHeaders map[string]string, content []byte) (resp *http.Response, err error) {
+// Makes an HTTP GET request to the specified GitHub endpoint.
+func (g *GitHub) get(uri string, extraHeaders map[string]string) (resp *http.Response, err error) {
 	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
-	request, err := http.NewRequest(method, url, nil)
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return
+	}
+
+	if extraHeaders != nil {
+		for k, v := range extraHeaders {
+			request.Header.Set(h, v)
+		}
+	}
+
+	resp, err := g.call(request)
+	return
+}
+
+// Makes an HTTP POST request to the specified GitHub endpoint.
+func (g *GitHub) post(uri string, extraHeaders map[string]string, content *bytes.Buffer) (resp *http.Response, err error) {
+	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
+	request, err := http.NewRequest("POST", url, content)
 	if err != nil {
 		return
 	}
@@ -194,10 +216,8 @@ func (g *GitHub) post(uri string, extraHeaders map[string]string, content []byte
 		}
 	}
 
-	// Set the Content-Type header, and add in the content body
+	// Set the Content-Type header
 	request.Header.Set("Content-Type", "application/json; charset=utf-8")
-	
-
-	response, err := g.call(request)
+	resp, err := g.call(request)
 	return
 }

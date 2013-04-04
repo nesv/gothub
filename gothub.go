@@ -176,9 +176,9 @@ func (g *GitHub) call(req *http.Request) (response *http.Response, err error) {
 		return
 	}
 
-	request.Header.Set("Authorization", g.Authorization)
+	req.Header.Set("Authorization", g.Authorization)
 
-	response, err = g.httpClient.Do(request)
+	response, err = g.httpClient.Do(req)
 	g.updateRates(response)
 	return
 }
@@ -193,11 +193,11 @@ func (g *GitHub) get(uri string, extraHeaders map[string]string) (resp *http.Res
 
 	if extraHeaders != nil {
 		for k, v := range extraHeaders {
-			request.Header.Set(h, v)
+			request.Header.Set(k, v)
 		}
 	}
 
-	resp, err := g.call(request)
+	resp, err = g.call(request)
 	return
 }
 
@@ -218,6 +218,25 @@ func (g *GitHub) post(uri string, extraHeaders map[string]string, content *bytes
 
 	// Set the Content-Type header
 	request.Header.Set("Content-Type", "application/json; charset=utf-8")
-	resp, err := g.call(request)
+	resp, err = g.call(request)
+	return
+}
+
+// Makes an HTTP DELETE request to the specified GitHub endpoint.
+func (g *GitHub) delete(uri string, extraHeaders map[string]string, content *bytes.Buffer) (resp *http.Response, err error) {
+	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
+	request, err := http.NewRequest("DELETE", url, content)
+	if err != nil {
+		return
+	}
+
+	if extraHeaders != nil {
+		for h, v := range extraHeaders {
+			request.Header.Set(h, v)
+		}
+	}
+
+	request.Header.Set("Content-Type", "application/json; charset=utf-8")
+	resp, err = g.call(request)
 	return
 }

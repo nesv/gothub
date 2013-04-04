@@ -2,8 +2,10 @@ package gothub
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -34,6 +36,40 @@ type User struct {
 	CreatedAt   time.Time `json:"created_at"`
 	Type        string    `json:"type"`
 	g           *GitHub
+}
+
+// A minimized form of the User struct, for holding information about a follower.
+type Follower struct {
+	Login      string `json:"login"`
+	Id         int    `json:"id"`
+	AvatarUrl  string `json:"avatar_url"`
+	GravatarId string `json:"gravatar_id"`
+	Url        string `json:"url"`
+}
+
+// Gets a detailed list of a user's followers.
+func (u User) GetFollowers() (followers []Follower, err error) {
+	uri := fmt.Sprintf("/users/%s/followers", u.Login)
+	fs := make([]Follower, 0)
+	err = u.g.callGithubApi("GET", uri, &fs)
+	if err != nil {
+		return
+	}
+	/*
+		if len(response.Header.Get("Link")) > 0 {
+			// It would appear that we have to make several more requests, so as 
+			// to get all of the user's followers (read: pagination).
+			pages := parseLinkHeader(response)
+			for _, page := range pages {
+				url, _ := url.Parse(page.Url)
+				f := make([]Follower, 0)
+				response, err = u.g.callGithubApi("GET", url.RequestURI(), &f)
+				fs = append(fs, f...)
+			}
+		}
+	*/
+	followers = fs
+	return
 }
 
 // Returns the details of a single user, as specified by their "login".
@@ -93,7 +129,6 @@ func (g *GitHub) AddEmails(emails []string) (err error) {
 	if response.StatusCode != http.StatusCreated {
 		e := "GitHub returned a %d status code; was expecting %d"
 		err = errors.New(fmt.Sprintf(e, response.StatusCode, http.StatusCreated))
-		return
 	}
 	return
 }
@@ -101,5 +136,15 @@ func (g *GitHub) AddEmails(emails []string) (err error) {
 // Disassociate a list of emails from the currently-authenticated user's
 // account.
 func (g *GitHub) DeleteEmails(emails []string) (err error) {
+	addresses := fmt.Sprintf("%v", emails)
+	buf := bytes.NewBufferString(addresses)
+	response, err := g.delete("/user/emails", nil, buf)
+	if err != nil {
+		return
+	}
+	if response.StatusCode != http.StatusNoContent {
+		e := "GitHub returned a %d status code; was expecting %d"
+		err = errors.New(fmt.Sprintf(e, response.StatusCode, http.StatusNoContent))
+	}
 	return
 }

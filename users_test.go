@@ -1,20 +1,24 @@
 package gothub
 
 import (
+	"log"
 	"testing"
 )
 
-func TestGetUser(t *testing.T) {
+func init() {
 	u, p, err := getTestingCredentials()
 	if err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
-	var g *GitHub
-	g, err = BasicLogin(u, p)
+
+	tgh, err = BasicLogin(u, p)
 	if err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
-	if user, err := g.GetUser(u); err != nil {
+}
+
+func TestGetUser(t *testing.T) {
+	if user, err := tgh.GetUser("nesv"); err != nil {
 		t.Error(err)
 	} else {
 		t.Logf("ID: %d", user.Id)
@@ -23,20 +27,7 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestGetCurrentUser(t *testing.T) {
-	username, password, err := getTestingCredentials()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var g *GitHub
-	g, err = BasicLogin(username, password)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Logf("Authorization: %s", g.Authorization)
-
-	user, err := g.GetCurrentUser()
+	user, err := tgh.GetCurrentUser()
 	if err != nil {
 		t.Error(err)
 	} else {
@@ -46,17 +37,7 @@ func TestGetCurrentUser(t *testing.T) {
 }
 
 func TestUserEmails(t *testing.T) {
-	u, p, err := getTestingCredentials()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	g, err := BasicLogin(u, p)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	emails, err := g.Emails()
+	emails, err := tgh.Emails()
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,5 +45,17 @@ func TestUserEmails(t *testing.T) {
 	t.Logf("# emails: %d", len(emails))
 	for i, email := range emails {
 		t.Logf("Email #%d: %s", i+1, email)
+	}
+}
+
+func TestGetFollowers(t *testing.T) {
+	user, _ := tgh.GetCurrentUser()
+	if followers, err := user.GetFollowers(); err != nil {
+		t.Error(err)
+	} else {
+		t.Logf("The following users are following \"%s\":", user.Login)
+		for _, follower := range followers {
+			t.Logf("%s", follower.Login)
+		}
 	}
 }

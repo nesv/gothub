@@ -141,7 +141,7 @@ func (g *GitHub) Emails() (emails []string, err error) {
 func (g *GitHub) AddEmails(emails []string) (err error) {
 	addresses := fmt.Sprintf("%v", emails)
 	buf := bytes.NewBufferString(addresses)
-	response, err := g.post("/user/emails", nil, buf)
+	response, err := g.httpPost("/user/emails", nil, buf)
 	if err != nil {
 		return
 	}
@@ -157,7 +157,7 @@ func (g *GitHub) AddEmails(emails []string) (err error) {
 func (g *GitHub) DeleteEmails(emails []string) (err error) {
 	addresses := fmt.Sprintf("%v", emails)
 	buf := bytes.NewBufferString(addresses)
-	response, err := g.delete("/user/emails", nil, buf)
+	response, err := g.httpDelete("/user/emails", nil, buf)
 	if err != nil {
 		return
 	}
@@ -171,7 +171,7 @@ func (g *GitHub) DeleteEmails(emails []string) (err error) {
 // Check to see whether or not the current user `u` is following another user.
 func (g GitHub) IsFollowing(anotherUser string) (following bool, err error) {
 	uri := fmt.Sprintf("/user/following/%s", anotherUser)
-	response, err := g.get(uri, nil)
+	response, err := g.httpGet(uri, nil)
 	if err != nil {
 		return
 	}
@@ -180,6 +180,35 @@ func (g GitHub) IsFollowing(anotherUser string) (following bool, err error) {
 		following = true
 	case http.StatusNotFound:
 		following = false
+	}
+	return
+}
+
+// Follow a user.
+func (g GitHub) Follow(user string) (err error) {
+	uri := fmt.Sprintf("/user/following/%s", user)
+	response, err := g.httpPut(uri, nil, nil)
+	if err != nil {
+		return
+	}
+
+	if response.StatusCode != http.StatusNoContent {
+		e := "Bad HTTP status; wanted %d got %d"
+		err = errors.New(fmt.Sprintf(e, http.StatusNoContent, response.StatusCode))
+	}
+
+	return
+}
+
+// Unfollow a user.
+func (g GitHub) Unfollow(user string) (err error) {
+	uri := fmt.Sprintf("/user/following/%s", user)
+	response, err := g.httpDelete(uri, nil, nil)
+	if err != nil {
+		return
+	} else if response.StatusCode != http.StatusNoContent {
+		e := "Bad HTTP status; wanted %d got %d"
+		err = errors.New(fmt.Sprintf(e, http.StatusNoContent, response.StatusCode))
 	}
 	return
 }

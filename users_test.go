@@ -82,3 +82,33 @@ func TestIsFollowing(t *testing.T) {
 		t.Logf("The current user is not following %s", u)
 	}
 }
+
+func TestFollow(t *testing.T) {
+	u := "octocat"
+	if err := tgh.Follow(u); err != nil {
+		t.Error(err)
+	} else {
+		if following, err := tgh.IsFollowing(u); err != nil {
+			t.Error(err)
+		} else if following {
+			t.Logf("You are now following %s", u)
+		} else {
+			t.Logf("Caches take time")
+		}
+	}
+}
+
+func TestUnfollow(t *testing.T) {
+	u := "octocat"
+	if err := tgh.Unfollow(u); err != nil {
+		t.Error(err)
+	} else {
+		if following, err := tgh.IsFollowing(u); err != nil {
+			t.Error(err)
+		} else if !following {
+			t.Logf("You are no longer following %s", u)
+		} else {
+			t.Logf("Caches take time")
+		}
+	}
+}

@@ -59,3 +59,15 @@ func TestGetFollowers(t *testing.T) {
 		}
 	}
 }
+
+func TestGetFollowing(t *testing.T) {
+	user, _ := tgh.GetCurrentUser()
+	if following, err := user.GetFollowing(); err != nil {
+		t.Error(err)
+	} else {
+		t.Logf("%s is following:", user.Login)
+		for _, f := range following {
+			t.Logf("%s", f.Login)
+		}
+	}
+}

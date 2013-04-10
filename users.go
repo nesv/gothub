@@ -45,6 +45,17 @@ type Follower struct {
 	AvatarUrl  string `json:"avatar_url"`
 	GravatarId string `json:"gravatar_id"`
 	Url        string `json:"url"`
+	HtmlUrl string `json:"html_url"`
+	FollowersUrl string `json:"followers_url"`
+	FollowingUrl string `json:"following_url"`
+	GistsUrl string `json:"gists_url"`
+	StarredUrl string `json:"starred_url"`
+	SubscriptionsUrl string `json:"subscriptions_url"`
+	OrganizationsUrl string `json:"organizations_url"`
+	ReposUrl string `json:"repos_url"`
+	EventsUrl string `json:"events_url"`
+	ReceivedEventsUrl string `json:"received_events_url"`
+	Type string `json:"type"`
 }
 
 // Gets a detailed list of a user's followers.
@@ -69,6 +80,14 @@ func (u User) GetFollowers() (followers []Follower, err error) {
 		}
 	*/
 	followers = fs
+	return
+}
+
+// Gets a list of users the user is following.
+func (u User) GetFollowing() (following []Follower, err error) {
+	uri := fmt.Sprintf("/users/%s/following", u.Login)
+	following = make([]Follower, 0)
+	err = u.g.callGithubApi("GET", uri, &following)
 	return
 }
 

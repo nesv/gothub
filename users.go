@@ -167,3 +167,19 @@ func (g *GitHub) DeleteEmails(emails []string) (err error) {
 	}
 	return
 }
+
+// Check to see whether or not the current user `u` is following another user.
+func (g GitHub) IsFollowing(anotherUser string) (following bool, err error) {
+	uri := fmt.Sprintf("/user/following/%s", anotherUser)
+	response, err := g.get(uri, nil)
+	if err != nil {
+		return
+	}
+	switch response.StatusCode {
+	case http.StatusNoContent:
+		following = true
+	case http.StatusNotFound:
+		following = false
+	}
+	return
+}

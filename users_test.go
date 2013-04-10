@@ -71,3 +71,14 @@ func TestGetFollowing(t *testing.T) {
 		}
 	}
 }
+
+func TestIsFollowing(t *testing.T) {
+	u := "octocat"
+	if followingp, err := tgh.IsFollowing(u); err != nil {
+		t.Error(err)
+	} else if followingp {
+		t.Logf("The current user is following %s", u)
+	} else {
+		t.Logf("The current user is not following %s", u)
+	}
+}

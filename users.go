@@ -91,6 +91,20 @@ func (u User) GetFollowing() (following []Follower, err error) {
 	return
 }
 
+// Holds information about user's public SSH keys that they have provided to GitHub.
+type PublicKey struct {
+	Id  int    `json:"id"`
+	Key string `json:"key"`
+}
+
+// Gets the verified public SSH keys for a user.
+func (u User) GetPublicKeys() (keys []PublicKey, err error) {
+	uri := fmt.Sprintf("/users/%s/keys", u.Login)
+	keys = make([]PublicKey, 0)
+	err = u.g.callGithubApi("GET", uri, &keys)
+	return
+}
+
 // Returns the details of a single user, as specified by their "login".
 //
 // The term "login" is synonymous with "username":

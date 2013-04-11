@@ -112,3 +112,16 @@ func TestUnfollow(t *testing.T) {
 		}
 	}
 }
+
+func TestGetPublicKeys(t *testing.T) {
+	user, _ := tgh.GetCurrentUser()
+	keys, err := user.GetPublicKeys()
+	if err != nil {
+		t.Error(err)
+	} else {
+		t.Logf("%s has the following public keys:", user.Login)
+		for _, k := range keys {
+			t.Logf("%d\t%s", k.Id, k.Key)
+		}
+	}
+}

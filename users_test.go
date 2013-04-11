@@ -125,3 +125,29 @@ func TestGetPublicKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestCurrentUserPublicKeys(t *testing.T) {
+	if keys, err := tgh.PublicKeys(); err != nil {
+		t.Error(err)
+	} else {
+		t.Logf("You have the following public keys:")
+		for _, k := range keys {
+			t.Logf("%d %s %s", k.Id, k.Title, k.Url)
+		}
+	}
+}
+
+func TestGetSinglePublicKey(t *testing.T) {
+	keys, err := tgh.PublicKeys()
+	if err != nil {
+		t.Error("Could not fetch the current user's public keys")
+		t.Error(err)
+	} else {
+		key, err := tgh.GetPublicKey(keys[0].Id)
+		if err != nil {
+			t.Error(err)
+		} else {
+			t.Logf("Fetched public key %d, %s", key.Id, key.Title)
+		}
+	}
+}

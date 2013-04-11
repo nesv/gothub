@@ -93,8 +93,10 @@ func (u User) GetFollowing() (following []Follower, err error) {
 
 // Holds information about user's public SSH keys that they have provided to GitHub.
 type PublicKey struct {
-	Id  int    `json:"id"`
-	Key string `json:"key"`
+	Id    int    `json:"id"`
+	Key   string `json:"key"`
+	Url   string `json:"url"`
+	Title string `json:"title"`
 }
 
 // Gets the verified public SSH keys for a user.
@@ -224,5 +226,19 @@ func (g GitHub) Unfollow(user string) (err error) {
 		e := "Bad HTTP status; wanted %d got %d"
 		err = errors.New(fmt.Sprintf(e, http.StatusNoContent, response.StatusCode))
 	}
+	return
+}
+
+// Fetch a listing of the currently-authenticated user's public SSH keys.
+func (g GitHub) PublicKeys() (keys []PublicKey, err error) {
+	keys = make([]PublicKey, 0)
+	err = g.callGithubApi("GET", "/user/keys", &keys)
+	return
+}
+
+// Fetch a singular public SSH key.
+func (g GitHub) GetPublicKey(id int) (key PublicKey, err error) {
+	uri := fmt.Sprintf("/user/keys/%d", id)
+	err = g.callGithubApi("GET", uri, &key)
 	return
 }

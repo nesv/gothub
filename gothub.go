@@ -1,6 +1,7 @@
 package gothub
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -165,4 +166,167 @@ func (g *GitHub) callGithubApi(method, uri string, rs interface{}) error {
 	}
 
 	return err
+}
+
+type unprocessableEntityError struct {
+	Resource string `json:"resource"`
+	Field    string `json:"field"`
+	Code     string `json:"code"`
+}
+
+type unprocessableEntity struct {
+	Message string                     `json:"message"`
+	Errors  []unprocessableEntityError `json:"errors"`
+}
+
+// Stuffs the approriate Authorization header into place on the request, then
+// calls the GitHub API and udpates the API limit rates.
+func (g *GitHub) call(req *http.Request) (response *http.Response, err error) {
+	if g.RateLimitRemaining == 0 {
+		err = ErrRateLimitReached
+		return
+	}
+
+	req.Header.Set("Authorization", g.Authorization)
+
+	response, err = g.httpClient.Do(req)
+	g.updateRates(response)
+
+	// Special handling for the HTTP 422 Unprocessable Entity.
+	if response.StatusCode != 422 {
+		return
+	}
+
+	// Stupid "err is shadowed during return"
+	body, err := ioutil.ReadAll(response.Body)
+	var uerror error
+	if err == nil {
+		var unprocessable unprocessableEntity
+		err = json.Unmarshal(body, &unprocessable)
+		if err != nil {
+			return
+		}
+
+		e := "%s: %+v"
+		uerror = errors.New(fmt.Sprintf(e, unprocessable.Message,
+			unprocessable.Errors))
+	}
+
+	if uerror != nil {
+		err = uerror
+	}
+
+	return
+}
+
+// Makes an HTTP GET request to the specified GitHub endpoint.
+func (g *GitHub) httpGet(uri string, extraHeaders map[string]string) (resp *http.Response, err error) {
+	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return
+	}
+
+	if extraHeaders != nil {
+		for k, v := range extraHeaders {
+			request.Header.Set(k, v)
+		}
+	}
+
+	resp, err = g.call(request)
+	return
+}
+
+// Makes an HTTP POST request to the specified GitHub endpoint.
+func (g *GitHub) httpPost(uri string, extraHeaders map[string]string, content *bytes.Buffer) (resp *http.Response, err error) {
+	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
+	request, err := http.NewRequest("POST", url, content)
+	if err != nil {
+		return
+	}
+
+	// Add (any of) the extra headers to the request
+	if extraHeaders != nil {
+		for h, v := range extraHeaders {
+			request.Header.Set(h, v)
+		}
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json; charset=utf-8")
+	resp, err = g.call(request)
+	return
+}
+
+// Makes an HTTP DELETE request to the specified GitHub endpoint.
+func (g *GitHub) httpDelete(uri string, extraHeaders map[string]string, content *bytes.Buffer) (resp *http.Response, err error) {
+	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
+	var request *http.Request
+	if content != nil {
+		request, err = http.NewRequest("DELETE", url, content)
+	} else {
+		request, err = http.NewRequest("DELETE", url, nil)
+	}
+	if err != nil {
+		return
+	}
+
+	if extraHeaders != nil {
+		for h, v := range extraHeaders {
+			request.Header.Set(h, v)
+		}
+	}
+
+	request.Header.Set("Content-Type", "application/json; charset=utf-8")
+	resp, err = g.call(request)
+	return
+}
+
+// Makes an HTTP PUT request.
+func (g *GitHub) httpPut(uri string, extraHeaders map[string]string, content *bytes.Buffer) (resp *http.Response, err error) {
+	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
+	var request *http.Request
+	if content != nil {
+		request, err = http.NewRequest("PUT", url, content)
+	} else {
+		request, err = http.NewRequest("PUT", url, nil)
+	}
+	if err != nil {
+		return
+	}
+
+	if extraHeaders != nil {
+		for h, v := range extraHeaders {
+			request.Header.Set(h, v)
+		}
+	}
+
+	request.Header.Set("Content-Type", "application/json; charset=utf-8")
+	resp, err = g.call(request)
+	return
+}
+
+// Makes an HTTP PATCH request.
+func (g *GitHub) httpPatch(uri string, extraHeaders map[string]string, content *bytes.Buffer) (resp *http.Response, err error) {
+	url := fmt.Sprintf("%s%s", GitHubUrl, uri)
+	var request *http.Request
+	if content != nil {
+		request, err = http.NewRequest("PATCH", url, content)
+	} else {
+		request, err = http.NewRequest("PATCH", url, nil)
+	}
+
+	if err != nil {
+		return
+	}
+
+	if extraHeaders != nil {
+		for h, v := range extraHeaders {
+			request.Header.Set(h, v)
+		}
+	}
+
+	request.Header.Set("Content-Type", "application/json; charset=utf-8")
+	resp, err = g.call(request)
+	return
 }

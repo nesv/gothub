@@ -2,10 +2,13 @@ package gothub
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -93,9 +96,9 @@ func (u User) GetFollowing() (following []Follower, err error) {
 
 // Holds information about user's public SSH keys that they have provided to GitHub.
 type PublicKey struct {
-	Id    int    `json:"id"`
+	Id    int    `json:"id,omitempty"`
 	Key   string `json:"key"`
-	Url   string `json:"url"`
+	Url   string `json:"url,omitempty"`
 	Title string `json:"title"`
 }
 
@@ -240,5 +243,81 @@ func (g GitHub) PublicKeys() (keys []PublicKey, err error) {
 func (g GitHub) GetPublicKey(id int) (key PublicKey, err error) {
 	uri := fmt.Sprintf("/user/keys/%d", id)
 	err = g.callGithubApi("GET", uri, &key)
+	return
+}
+
+// Add a public key to your account.
+//
+// When the creation of your new key is successful, this function will return
+// the new ID of the key, which will be retrievable at:
+//
+//     https://api.github.com/user/keys/:id
+//
+func (g GitHub) AddPublicKey(title, key string) (id int, err error) {
+	b, err := json.Marshal(PublicKey{Title: title, Key: key})
+	if err != nil {
+		return
+	}
+
+	buf := bytes.NewBuffer(b)
+	response, err := g.httpPost("/user/keys", nil, buf)
+	if err != nil {
+		return
+	}
+
+	switch response.StatusCode {
+	case 422:
+		err = errors.New("That key already exists")
+
+	case http.StatusCreated:
+		re := regexp.MustCompile(`(\d+)$`)
+		matches := re.FindStringSubmatch(response.Header.Get("Location"))
+		if len(matches) > 1 {
+			id, err = strconv.Atoi(matches[1])
+		} else {
+			e := "Cannot find new pubkey ID in \"%s\""
+			err = errors.New(fmt.Sprintf(e, response.Header.Get("Location")))
+		}
+
+	default:
+		e := "Bad HTTP status; wanted %d got %d"
+		err = errors.New(fmt.Sprintf(e, http.StatusCreated, response.StatusCode))
+	}
+
+	return
+}
+
+// Updates a currently-existing public key for the currently-authenticated user.
+func (g GitHub) UpdatePublicKey(id int, title, key string) (pk PublicKey, err error) {
+	rb, err := json.Marshal(PublicKey{Title: title, Key: key})
+	if err != nil {
+		return
+	}
+
+	buf := bytes.NewBuffer(rb)
+	uri := fmt.Sprintf("/user/keys/%d", id)
+	response, err := g.httpPatch(uri, nil, buf)
+	if err != nil {
+		return
+	}
+
+	if response.StatusCode == 422 {
+		// Unprocessable entity.
+	} else if response.StatusCode != http.StatusOK {
+		e := "Bad HTTP status; wanted %d got %d"
+		err = errors.New(fmt.Sprintf(e, http.StatusOK, response.StatusCode))
+	}
+
+	return
+}
+
+// Removes a public key from your account.
+func (g GitHub) RemovePublicKey(id int) (err error) {
+	uri := fmt.Sprintf("/user/keys/%d", id)
+	response, err := g.httpDelete(uri, nil, nil)
+	if response.StatusCode != http.StatusNoContent {
+		e := "Bad HTTP status; wanted %d got %d"
+		err = errors.New(fmt.Sprintf(e, http.StatusNoContent, response.StatusCode))
+	}
 	return
 }

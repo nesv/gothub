@@ -170,13 +170,13 @@ func (g *GitHub) callGithubApi(method, uri string, rs interface{}) error {
 
 type unprocessableEntityError struct {
 	Resource string `json:"resource"`
-	Field string `json:"field"`
-	Code string `json:"code"`
+	Field    string `json:"field"`
+	Code     string `json:"code"`
 }
 
 type unprocessableEntity struct {
-	Message string `json:"message"`
-	Errors []unprocessableEntityError `json:"errors"`
+	Message string                     `json:"message"`
+	Errors  []unprocessableEntityError `json:"errors"`
 }
 
 // Stuffs the approriate Authorization header into place on the request, then

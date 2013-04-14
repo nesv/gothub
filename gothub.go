@@ -14,6 +14,7 @@ import (
 // The HTTP host that we will hit to use the GitHub API.
 const (
 	GitHubUrl string = "https://api.github.com"
+	DefaultPageSize int = 30
 )
 
 var (

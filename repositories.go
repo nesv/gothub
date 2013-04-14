@@ -51,12 +51,14 @@ type Repository struct {
 
 // Get the currently-authenticated user's repositories.
 func (g GitHub) Repositories() (repositories []Repository, err error) {
+	repositories = make([]Repository, DefaultPageSize)
 	err = g.callGithubApi("GET", "/user/repos", &repositories)
 	return
 }
 
 // Get the user's repositories.
 func (u User) Repositories() (repositories []Repository, err error) {
+	repositories = make([]Repository, DefaultPageSize)
 	uri := fmt.Sprintf("/users/%s/repos", u.Login)
 	err = u.g.callGithubApi("GET", uri, &repositories)
 	return

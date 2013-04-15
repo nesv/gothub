@@ -27,7 +27,7 @@ func init() {
 }
 
 func TestGetUser(t *testing.T) {
-	if user, err := tgh.GetUser("nesv"); err != nil {
+	if user, err := tgh.GetUser("octocat"); err != nil {
 		t.Error(err)
 	} else {
 		t.Logf("ID: %d", user.Id)

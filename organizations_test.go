@@ -31,3 +31,12 @@ func TestUserOrganizations(t *testing.T) {
 		}
 	}
 }
+
+func TestGetOrganization(t *testing.T) {
+	if org, err := tgh.GetOrganization("github"); err != nil {
+		t.Errorf("%s", err)
+	} else {
+		t.Logf("Successfully fetched organization \"%s\"", org.Name)
+		t.Logf("%#v", org)
+	}
+}

@@ -13,8 +13,9 @@ import (
 
 // The HTTP host that we will hit to use the GitHub API.
 const (
-	GitHubUrl string = "https://api.github.com"
-	DefaultPageSize int = 30
+	GitHubUrl       string = "https://api.github.com"
+	DefaultPageSize int    = 30
+	AcceptHeader    string = "application/vnd.github.beta+json"
 )
 
 var (
@@ -107,6 +108,7 @@ func call(g *GitHub, method, uri string) (response *http.Response, err error) {
 	}
 
 	request.Header.Set("Authorization", g.Authorization)
+	request.Header.Set("Accept", AcceptHeader)
 
 	// Fire off the request.
 	response, err = g.httpClient.Do(request)

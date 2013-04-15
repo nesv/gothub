@@ -9,7 +9,8 @@ func TestRepositories(t *testing.T) {
 	} else {
 		t.Logf("You have %d repositories:", len(repos))
 		for _, repo := range repos {
-			t.Logf("%#v", repo)
+			t.Logf("%s", repo.FullName)
+			//t.Logf("%#v", repo)
 		}
 	}
 }
@@ -27,7 +28,8 @@ func TestUserRepositories(t *testing.T) {
 	} else {
 		t.Logf("%s has the following repositories:", user.Login)
 		for _, repo := range repos {
-			t.Logf("%#v", repo)
+			t.Logf("%s", repo.FullName)
+			//t.Logf("%#v", repo)
 		}
 	}
 	return

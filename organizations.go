@@ -40,12 +40,14 @@ type Organization struct {
 	Type              string           `json:"type"`
 	UpdatedAt         time.Time        `json:"updated_at"`
 	Url               string           `json:"url"`
+	g                 *GitHub
 }
 
 // Returns a complete Organization struct.
 func (g *GitHub) GetOrganization(name string) (org *Organization, err error) {
 	uri := fmt.Sprintf("/orgs/%s", name)
 	err = g.callGithubApi("GET", uri, &org)
+	org.g = g
 	return
 }
 

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // The HTTP host that we will hit to use the GitHub API.
@@ -76,6 +77,73 @@ func BasicLogin(username, password string) (*GitHub, error) {
 	// Should we get here, the basic authentication request failed.
 	e := "Authorization failed with HTTP code: %d"
 	return nil, errors.New(fmt.Sprintf(e, response.StatusCode))
+}
+
+/*
+Calls the specified GitHub endpoint, with the provided HTTP method, and
+unmarshals the JSON response (if there is one) into the provided interface{} v.
+
+You can use this function to interact with a majority of the GitHub v3
+endpoints.
+*/
+func (g *GitHub) Do(v interface{}, method string, uriParts ...string) (err error) {
+	if g.RateLimitRemaining == 0 {
+		err = ErrRateLimitReached
+		return
+	}
+
+	url := fmt.Sprintf("%s/%s", GitHubUrl, strings.Join(uriParts, "/"))
+
+	var request *http.Request
+	request, err = http.NewRequest(method, url, nil)
+	if err != nil {
+		return
+	}
+
+	request.Header.Set("Authorization", g.Authorization)
+	request.Header.Set("Accept", AcceptHeader)
+
+	var response *http.Response
+	response, err = g.httpClient.Do(request)
+	if err != nil {
+		return
+	}
+	g.updateRates(response)
+
+	switch strings.ToUpper(method) {
+	case "GET":
+		switch response.StatusCode {
+		case http.StatusNoContent, http.StatusOK:
+			if response.ContentLength == 0 && v == nil {
+				// All is good in the hood.
+				return
+			}
+		default:
+			err = errors.New(fmt.Sprintf("GitHub API responded with HTTP %d", response.StatusCode))
+			return
+		}
+	}
+
+	// If the user supplied an interface{} to unmarshal the JSON response
+	// body into, then do what is necessary!
+	if v != nil {
+		switch response.Header.Get("Content-Type") {
+		case "application/json":
+			fallthrough
+		case "application/json; charset=utf-8":
+			var body []byte
+			body, err = ioutil.ReadAll(response.Body)
+			if err != nil {
+				return
+			}
+
+			err = json.Unmarshal(body, v)
+		default:
+			err = ErrNoJSON
+		}
+	}
+
+	return
 }
 
 // Updates the call limit rates in the GitHub struct.

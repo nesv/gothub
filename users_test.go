@@ -8,6 +8,7 @@ import (
 var (
 	testKeyId   int
 	testSshKeys []string
+	currentUser User
 )
 
 func init() {
@@ -27,7 +28,8 @@ func init() {
 }
 
 func TestGetUser(t *testing.T) {
-	if user, err := tgh.GetUser("octocat"); err != nil {
+	var user User
+	if err := tgh.Do(&user, "GET", "users", "octocat"); err != nil {
 		t.Error(err)
 	} else {
 		t.Logf("ID: %d", user.Id)
@@ -36,18 +38,17 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestGetCurrentUser(t *testing.T) {
-	user, err := tgh.GetCurrentUser()
-	if err != nil {
+	if err := tgh.Do(&currentUser, "GET", "user"); err != nil {
 		t.Error(err)
 	} else {
-		t.Logf("ID: %d", user.Id)
-		t.Logf("Login: %s", user.Login)
+		t.Logf("ID: %d", currentUser.Id)
+		t.Logf("Login: %s", currentUser.Login)
 	}
 }
 
 func TestUserEmails(t *testing.T) {
-	emails, err := tgh.Emails()
-	if err != nil {
+	var emails []string
+	if err := tgh.Do(&emails, "GET", "user", "emails"); err != nil {
 		t.Error(err)
 	}
 
@@ -58,11 +59,11 @@ func TestUserEmails(t *testing.T) {
 }
 
 func TestGetFollowers(t *testing.T) {
-	user, _ := tgh.GetCurrentUser()
-	if followers, err := user.GetFollowers(); err != nil {
+	var followers []Follower
+	if err := tgh.Do(&followers, "GET", "users", currentUser.Login, "followers"); err != nil {
 		t.Error(err)
 	} else {
-		t.Logf("The following users are following \"%s\":", user.Login)
+		t.Logf("The following users are following \"%s\":", currentUser.Login)
 		for _, follower := range followers {
 			t.Logf("%s", follower.Login)
 		}
@@ -70,11 +71,11 @@ func TestGetFollowers(t *testing.T) {
 }
 
 func TestGetFollowing(t *testing.T) {
-	user, _ := tgh.GetCurrentUser()
-	if following, err := user.GetFollowing(); err != nil {
+	var following []Follower
+	if err := tgh.Do(&following, "GET", "users", currentUser.Login, "following"); err != nil {
 		t.Error(err)
 	} else {
-		t.Logf("%s is following:", user.Login)
+		t.Logf("%s is following:", currentUser.Login)
 		for _, f := range following {
 			t.Logf("%s", f.Login)
 		}

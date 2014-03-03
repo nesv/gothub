@@ -80,6 +80,14 @@ func BasicLogin(username, password string) (*GitHub, error) {
 }
 
 /*
+Login2FA allows users with two-factor authentication, to log in and use the
+GitHub API, with basic authentication.
+*/
+func Login2FA(username, password string) (gh *GitHub, err error) {
+	return
+}
+
+/*
 Calls the specified GitHub endpoint, with the provided HTTP method, and
 unmarshals the JSON response (if there is one) into the provided interface{} v.
 

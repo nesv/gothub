@@ -98,16 +98,31 @@ type Repository struct {
 }
 
 // Get the currently-authenticated user's repositories.
-func (g GitHub) Repositories() (repositories []Repository, err error) {
+func (g GitHub) Repositories(options ...int) (repositories []Repository, err error) {
+	var uri string
+	if len(options) > 0 {
+		page := options[0]
+		uri = fmt.Sprintf("/user/repos?page=%d", page)
+	} else {
+		uri = "/user/repos"
+	}
+
 	repositories = make([]Repository, 0)
-	err = g.callGithubApi("GET", "/user/repos", &repositories)
+	err = g.callGithubApi("GET", uri, &repositories)
 	return
 }
 
 // Get the user's repositories.
-func (u User) Repositories() (repositories []Repository, err error) {
+func (u User) Repositories(options ...int) (repositories []Repository, err error) {
+	var uri string
+	if len(options) > 0 {
+		page := options[0]
+		uri = fmt.Sprintf("/users/%s/repos?page=%d", u.Login, page)
+	} else {
+		uri = fmt.Sprintf("/users/%s/repos", u.Login)
+	}
+
 	repositories = make([]Repository, 0)
-	uri := fmt.Sprintf("/users/%s/repos", u.Login)
 	err = u.g.callGithubApi("GET", uri, &repositories)
 	return
 }

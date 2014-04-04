@@ -172,21 +172,6 @@ func TestAddPublicKey(t *testing.T) {
 	}
 }
 
-func TestUpdatePublicKey(t *testing.T) {
-	title := "gothub test key"
-	if testKeyId == 0 {
-		t.Errorf("The test key ID was not set by the TestAddPublicKey test")
-		return
-	}
-
-	updatedKey, err := tgh.UpdatePublicKey(testKeyId, testSshKeys[0], title)
-	if err != nil {
-		t.Errorf("Could not update key %d: %s", testKeyId, err)
-	} else {
-		t.Logf("Key %s successfully modified -> %s", updatedKey.Id, updatedKey.Title)
-	}
-}
-
 func TestRemovePublicKey(t *testing.T) {
 	if testKeyId == 0 {
 		t.Errorf("The test key ID was not set by the TestAddPublicKey test")

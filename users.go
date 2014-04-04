@@ -287,30 +287,6 @@ func (g GitHub) AddPublicKey(title, key string) (id int, err error) {
 	return
 }
 
-// Updates a currently-existing public key for the currently-authenticated user.
-func (g GitHub) UpdatePublicKey(id int, title, key string) (pk PublicKey, err error) {
-	rb, err := json.Marshal(PublicKey{Title: title, Key: key})
-	if err != nil {
-		return
-	}
-
-	buf := bytes.NewBuffer(rb)
-	uri := fmt.Sprintf("/user/keys/%d", id)
-	response, err := g.httpPatch(uri, nil, buf)
-	if err != nil {
-		return
-	}
-
-	if response.StatusCode == 422 {
-		// Unprocessable entity.
-	} else if response.StatusCode != http.StatusOK {
-		e := "Bad HTTP status; wanted %d got %d"
-		err = errors.New(fmt.Sprintf(e, http.StatusOK, response.StatusCode))
-	}
-
-	return
-}
-
 // Removes a public key from your account.
 func (g GitHub) RemovePublicKey(id int) (err error) {
 	uri := fmt.Sprintf("/user/keys/%d", id)

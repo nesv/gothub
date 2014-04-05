@@ -23,6 +23,15 @@ func getTestingCredentials() (username, password string, err error) {
 	return
 }
 
+func TestGuest(t *testing.T) {
+	if g, err := Guest(); err != nil {
+		t.Fatal(err)
+	} else {
+		t.Logf("RateLimit-Limit: %d", g.RateLimit)
+		t.Logf("RateLimit-Remaining: %d", g.RateLimitRemaining)
+	}
+}
+
 func TestBasicAuth(t *testing.T) {
 	username, password, err := getTestingCredentials()
 	if err != nil {

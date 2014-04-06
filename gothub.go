@@ -37,6 +37,32 @@ func hashAuth(u, p string) string {
 	return base64.StdEncoding.EncodeToString([]byte(a))
 }
 
+// Use API without authentication
+func Guest() (*GitHub, error) {
+	request, err := http.NewRequest("GET", GitHubUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if response.StatusCode == http.StatusOK {
+		ratelimit, err := strconv.Atoi(response.Header.Get("X-RateLimit-Limit"))
+		if err != nil {
+			return nil, err
+		}
+
+		remaining, err := strconv.Atoi(response.Header.Get("X-RateLimit-Remaining"))
+		if err != nil {
+			return nil, err
+		}
+
+		return &GitHub{httpClient: client, RateLimit: ratelimit, RateLimitRemaining: remaining}, nil
+	}
+
+	return nil, err
+}
+
 // Log in to GitHub using basic, username/password authentication.
 func BasicLogin(username, password string) (*GitHub, error) {
 	// Format and Base64-encode the provided username and password, in preparation for basic
@@ -175,7 +201,10 @@ func call(g *GitHub, method, uri string) (response *http.Response, err error) {
 		return
 	}
 
-	request.Header.Set("Authorization", g.Authorization)
+	if g.Authorization != "" {
+		// Use Authorization when you logged in
+		request.Header.Set("Authorization", g.Authorization)
+	}
 	request.Header.Set("Accept", AcceptHeader)
 
 	// Fire off the request.
